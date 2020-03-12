@@ -43,14 +43,14 @@ class Blockchain(object):
         # Return the new block
         return block
 
-    def new_transaction(self,sender,recipient,amount):
+    def new_transaction(self, sender, recipient, amount):
         transaction = {
-            sender:sender,
-            recipient:recipient,
+            sender: sender,
+            recipient: recipient,
             amount: amount
         }
         self.current_transactions.append(transaction)
-        index = len(self.chain) +1
+        index = len(self.chain) + 1
         return index
 
     def hash(self, block):
@@ -73,12 +73,9 @@ class Blockchain(object):
         # This can be hard to read, but .hexdigest() converts the
         # hash to a string of hexadecimal characters, which is
         # easier to work with and understand
-        
-
 
         # Return the hashed block string in hexadecimal format
         return hashlib.sha256(block_string).hexdigest()
-
 
     @property
     def last_block(self):
@@ -104,7 +101,6 @@ class Blockchain(object):
         return guess_hash[:6] == "000000"
 
 
-
 # Instantiate our Node
 app = Flask(__name__)
 
@@ -113,6 +109,21 @@ node_identifier = str(uuid4()).replace('-', '')
 
 # Instantiate the Blockchain
 blockchain = Blockchain()
+
+
+@app.route('/transactions/new', methods=['POST'])
+def new_transaction():
+    data = request.get_json()
+    required = ["sender", "recipient", "amount"]
+    if not all(k in data for k in required):
+        # then send a json message of missing values
+        response = {'message': "Missing Values"}
+        # return a 400 error
+        return jsonify(response), 400
+    index = blockchain.new_transaction(
+        data['sender'], data['recipient'], data['amount'])
+    response = {'message': f"added to block {index}"}
+    return jsonify(response), 200
 
 
 @app.route('/mine', methods=['POST'])
@@ -130,7 +141,7 @@ def mine():
         response = {'message': "Missing Values"}
         # return a 400 error
         return jsonify(response), 400
-    
+
     # get the submitted proof from data
     submitted_proof = data.get('proof')
 
@@ -155,7 +166,7 @@ def mine():
     # otherwise
     else:
         # send a json mesage that the proof was invalid
-        response = { 'message': "Proof was invalid or already submitted"}
+        response = {'message': "Proof was invalid or already submitted"}
 
         return jsonify(response), 200
 
@@ -168,9 +179,10 @@ def full_chain():
     }
     return jsonify(response), 200
 
+
 @app.route('/last_block', methods=['GET'])
 def last_block():
-    response = { 'last_block': blockchain.last_block }
+    response = {'last_block': blockchain.last_block}
     return jsonify(response), 200
 
 
